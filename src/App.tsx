@@ -9,6 +9,7 @@ import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { RecentsProvider } from "@/contexts/RecentsContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Layout from "@/components/Layout";
+import { Analytics } from "@vercel/analytics/react"; // <-- Correct import for Vite/React
 
 const Home = lazy(() => import("@/pages/Home"));
 const Favorites = lazy(() => import("@/pages/Favorites"));
@@ -66,6 +67,7 @@ const App = () => (
             </RecentsProvider>
           </FavoritesProvider>
         </Router>
+        <Analytics /> {/* <-- Add the component here */}
       </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>

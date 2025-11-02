@@ -731,7 +731,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     videoRef.current.currentTime = seekTimeRef.current;
     if (wasPlayingBeforeSeekRef.current) videoRef.current.play().catch(console.error);
     touchStartRef.current = null;
-    setPlayerState(prev => ({ ...prev, isSeeking: false, isPlaying: !videoRef.current?.paused }));
+    setPlayerState(prev => ({ ...prev, isPlaying: !videoRef.current?.paused }));
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
   }, []);
   
@@ -922,6 +922,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         textClass: 'text-lg',
         progressBarClass: 'h-2',
         progressThumbClass: 'w-5 h-5',
+        progressInsetClass: 'left-2.5 right-2.5', // FIX: Added Inset
         containerPaddingClass: 'p-6'
       };
     }
@@ -938,6 +939,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         textClass: 'text-base',
         progressBarClass: 'h-1.5',
         progressThumbClass: 'w-4 h-4',
+        progressInsetClass: 'left-2 right-2', // FIX: Added Inset
         containerPaddingClass: 'p-4'
       };
     }
@@ -954,6 +956,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         textClass: 'text-sm',
         progressBarClass: 'h-1',
         progressThumbClass: 'w-3 h-3',
+        progressInsetClass: 'left-1.5 right-1.5', // FIX: Added Inset
         containerPaddingClass: 'p-3'
       };
     }
@@ -970,6 +973,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         textClass: 'text-base',
         progressBarClass: 'h-1.5',
         progressThumbClass: 'w-4 h-4',
+        progressInsetClass: 'left-2 right-2', // FIX: Added Inset
         containerPaddingClass: 'p-4'
       };
     }
@@ -985,6 +989,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       textClass: 'text-sm',
       progressBarClass: 'h-1',
       progressThumbClass: 'w-3 h-3',
+      progressInsetClass: 'left-1.5 right-1.5', // FIX: Added Inset
       containerPaddingClass: 'p-4'
     };
   };
@@ -1051,12 +1056,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           <div className={`absolute bottom-0 left-0 right-0 ${sizes.containerPaddingClass} flex flex-col`} style={{ maxHeight: isMobile ? '30%' : '25%' }}>
             <div className="mb-2 md:mb-3 flex-shrink-0">
               <div ref={progressRef} className="relative h-2 py-2 -my-2 bg-transparent cursor-pointer group" onClick={handleProgressClick} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
-                <div className={`absolute inset-x-0 top-1/2 -translate-y-1/2 ${sizes.progressBarClass} bg-white bg-opacity-30 rounded-full`}>
+                
+                {/* FIX FOR SEEKBAR ALIGNMENT: Replaced 'inset-x-0' with the new inset class */}
+                <div className={`absolute ${sizes.progressInsetClass} top-1/2 -translate-y-1/2 ${sizes.progressBarClass} bg-white bg-opacity-30 rounded-full`}>
+                  
                   <div className="absolute top-0 left-0 h-full bg-white bg-opacity-50 rounded-full" style={{ width: isFinite(playerState.duration) && playerState.duration > 0 ? `${(playerState.buffered / playerState.duration) * 100}%` : '0%' }}/>
                   <div className="absolute top-0 left-0 h-full bg-red-500 rounded-full" style={{ width: `${currentTimePercentage}%` }}/>
-                  {/* FIX FOR SEEKBAR JUMP: Removed the 'scale-150' when playerState.isSeeking is true */}
-                  <div className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${sizes.progressThumbClass} rounded-full bg-red-500 transition-all duration-150 ease-out group-hover:scale-150`} style={{ left: `${currentTimePercentage}%` }} onMouseDown={handleDragStart} onClick={(e) => e.stopPropagation()} onTouchStart={handleTouchStart}/>
                 </div>
+                
+                {/* FIX FOR SEEKBAR JUMP: Removed the 'scale-150' when playerState.isSeeking is true */}
+                <div className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 ${sizes.progressThumbClass} rounded-full bg-red-500 transition-all duration-150 ease-out group-hover:scale-150`} style={{ left: `${currentTimePercentage}%` }} onMouseDown={handleDragStart} onClick={(e) => e.stopPropagation()} onTouchStart={handleTouchStart}/>
               </div>
             </div>
             
@@ -1160,11 +1169,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               )}
               
               {isMobile && (
-                // FIX FOR MOBILE CONTROLS OVERFLOW: Parent container
+                // FIX FOR MOBILE CONTROLS OVERFLOW: Parent container (removed justify-between)
                 <div className={`flex items-center ${sizes.gapClass} flex-1 min-w-0 flex-nowrap`}>
                   
-                  {/* FIX FOR MOBILE CONTROLS OVERFLOW: Left group */}
-                  <div className={`flex items-center ${sizes.gapClass} pl-2.5 flex-shrink-0`}>
+                  {/* FIX FOR MOBILE CONTROLS OVERFLOW: Left group (added flex-shrink-0) */}
+                  <div className={`flex items-center ${sizes.gapClass} flex-shrink-0`}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); toggleMute(); }} 
                       className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
@@ -1185,7 +1194,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                     </div>
                   </div>
 
-                  {/* FIX FOR MOBILE CONTROLS OVERFLOW: Center group */}
+                  {/* FIX FOR MOBILE CONTROLS OVERFLOW: Center group (added flex-1, min-w-0, justify-center) */}
                   <div className={`flex items-center ${sizes.gapClass} flex-1 min-w-0 justify-center`}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); seekBackward(); }} 
@@ -1212,8 +1221,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                     </button>
                   </div>
 
-                  {/* FIX FOR MOBILE CONTROLS OVERFLOW: Right group */}
-                  <div className={`flex items-center ${sizes.gapClass} pr-2.5 flex-shrink-0`}>
+                  {/* FIX FOR MOBILE CONTROLS OVERFLOW: Right group (added flex-shrink-0) */}
+                  <div className={`flex items-center ${sizes.gapClass} flex-shrink-0`}>
                     {document.pictureInPictureEnabled && (
                       <button 
                         onClick={(e) => { e.stopPropagation(); togglePip(); }} 

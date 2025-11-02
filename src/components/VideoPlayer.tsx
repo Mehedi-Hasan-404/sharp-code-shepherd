@@ -1,8 +1,9 @@
-// /src/components/VideoPlayer.tsx - Part 1/5
+// /src/components/VideoPlayer.tsx
 // Responsive Player with Desktop & Mobile Layouts
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Play, Pause, VolumeX, Volume2, Maximize, Minimize, Loader2, AlertCircle, RotateCcw, Settings, PictureInPicture2, Subtitles, Rewind, FastForward, ChevronRight, Volume1, Music, Check } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import shaka from 'shaka-player/dist/shaka-player.compiled.js';
 
 interface VideoPlayerProps {
   streamUrl: string;
@@ -126,7 +127,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (urlLower.includes('manifest') || drmInfo) {
       return { type: 'dash', cleanUrl, drmInfo };
     }
-    return { type: 'hls', cleanUrl, drmInfo };
+    // FIX: Default to dash (Shaka) for better flexibility
+    return { type: 'dash', cleanUrl, drmInfo };
   }, []);
 
   const destroyPlayer = useCallback(() => {
@@ -278,10 +280,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   
   const initShakaPlayer = async (url: string, video: HTMLVideoElement, drmInfo?: any) => {
     try {
-      // @ts-expect-error - Dynamic import workaround for shaka-player
-      const shakaModule = await import('shaka-player');
-      const shaka = shakaModule.default || shakaModule;
-      
+      // FIX: Use static import of Shaka Player
       if (shaka.polyfill) {
         shaka.polyfill.installAll();
       }
@@ -1060,6 +1059,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               </div>
             </div>
             
+            {/* FIX FOR MOBILE CONTROLS OVERFLOW:
+              - Removed 'px-2.5' from the parent div below.
+              - Added 'pl-2.5' to the left-side control group.
+              - Added 'pr-2.5' to the right-side control group.
+              This applies to the `isMobile` block only.
+            */}
             <div className={`flex items-center ${sizes.gapClass} flex-nowrap justify-between flex-1 min-h-[40px]`}>
               {!isMobile && (
                 <div className={`flex items-center ${sizes.gapClass} flex-1 min-w-0 flex-wrap`}>
@@ -1072,20 +1077,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       {playerState.isMuted ? <VolumeX size={sizes.iconSmall} /> : volume > 50 ? <Volume2 size={sizes.iconSmall} /> : <Volume1 size={sizes.iconSmall} />}
                     </button>
                     
-                    {/* This is the corrected code.
-  It uses the "volume-slider-horizontal" class from your index.css
-  which properly styles the track and thumb.
-*/}
-<input
-  type="range"
-  min="0"
-  max="100"
-  value={volume}
-  onChange={(e) => handleVolumeChange(Number(e.target.value))}
-  className="w-20 flex-shrink-0 volume-slider-horizontal"
-  data-testid="slider-volume"
-  onClick={(e) => e.stopPropagation()}
-/>
+                    {/* FIX FOR DESKTOP VOLUME SLIDER:
+                      - Replaced the long list of Tailwind classes with 'volume-slider-horizontal'.
+                      - Kept 'w-20' and 'flex-shrink-0' for layout.
+                    */}
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={volume}
+                      onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                      className="w-20 flex-shrink-0 volume-slider-horizontal"
+                      data-testid="slider-volume"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </div>
                   
                   <div
@@ -1163,70 +1168,79 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
               )}
               
               {isMobile && (
+                // MOBILE CONTROLS PARENT: `px-2.5` was removed from here
                 <div className={`flex items-center ${sizes.gapClass} flex-1 min-w-0 flex-nowrap justify-between`}>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); toggleMute(); }} 
-                    className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
-                    data-testid="button-volume-mobile"
-                  >
-                    {playerState.isMuted ? <VolumeX size={sizes.iconSmall} /> : <Volume2 size={sizes.iconSmall} />}
-                  </button>
                   
-                  <div
-                    className={`text-white ${sizes.textClass} whitespace-nowrap flex-shrink-0 mx-1`}
-                    data-testid="text-time-mobile"
-                  >
-                    {playerState.isLive ? (
-                      <span className="px-1.5 py-0.5 bg-red-600 rounded text-xs font-semibold">LIVE</span>
-                    ) : (
-                      <>{formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}</>
-                    )}
-                  </div>
-                  
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); seekBackward(); }} 
-                    className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
-                    data-testid="button-rewind-mobile"
-                  >
-                    <Rewind size={sizes.iconSmall} />
-                  </button>
-                  
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); togglePlay(); }} 
-                    className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
-                    data-testid="button-play-pause-mobile"
-                  >
-                    {playerState.isPlaying ? <Pause size={sizes.iconMedium} /> : <Play size={sizes.iconMedium} />}
-                  </button>
-                  
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); seekForward(); }} 
-                    className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
-                    data-testid="button-forward-mobile"
-                  >
-                    <FastForward size={sizes.iconSmall} />
-                  </button>
-                  
-                  <div className="flex-1"></div>
-                  
-                  {document.pictureInPictureEnabled && (
+                  {/* LEFT GROUP: `pl-2.5` was added here */}
+                  <div className={`flex items-center ${sizes.gapClass} pl-2.5`}>
                     <button 
-                      onClick={(e) => { e.stopPropagation(); togglePip(); }} 
+                      onClick={(e) => { e.stopPropagation(); toggleMute(); }} 
                       className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
-                      title="Picture-in-picture"
-                      data-testid="button-pip-mobile"
+                      data-testid="button-volume-mobile"
                     >
-                      <PictureInPicture2 size={sizes.iconSmall} />
+                      {playerState.isMuted ? <VolumeX size={sizes.iconSmall} /> : <Volume2 size={sizes.iconSmall} />}
                     </button>
-                  )}
-                  
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} 
-                    className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
-                    data-testid="button-fullscreen-mobile"
-                  >
-                    {playerState.isFullscreen ? <Minimize size={sizes.iconSmall} /> : <Maximize size={sizes.iconSmall} />}
-                  </button>
+                    
+                    <div
+                      className={`text-white ${sizes.textClass} whitespace-nowrap flex-shrink-0 mx-1`}
+                      data-testid="text-time-mobile"
+                    >
+                      {playerState.isLive ? (
+                        <span className="px-1.5 py-0.5 bg-red-600 rounded text-xs font-semibold">LIVE</span>
+                      ) : (
+                        <>{formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}</>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CENTER GROUP */}
+                  <div className={`flex items-center ${sizes.gapClass}`}>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); seekBackward(); }} 
+                      className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
+                      data-testid="button-rewind-mobile"
+                    >
+                      <Rewind size={sizes.iconSmall} />
+                    </button>
+                    
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); togglePlay(); }} 
+                      className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
+                      data-testid="button-play-pause-mobile"
+                    >
+                      {playerState.isPlaying ? <Pause size={sizes.iconMedium} /> : <Play size={sizes.iconMedium} />}
+                    </button>
+                    
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); seekForward(); }} 
+                      className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
+                      data-testid="button-forward-mobile"
+                    >
+                      <FastForward size={sizes.iconSmall} />
+                    </button>
+                  </div>
+
+                  {/* RIGHT GROUP: `pr-2.5` was added here */}
+                  <div className={`flex items-center ${sizes.gapClass} pr-2.5`}>
+                    {document.pictureInPictureEnabled && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); togglePip(); }} 
+                        className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
+                        title="Picture-in-picture"
+                        data-testid="button-pip-mobile"
+                      >
+                        <PictureInPicture2 size={sizes.iconSmall} />
+                      </button>
+                    )}
+                    
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); toggleFullscreen(); }} 
+                      className={`text-white hover:text-blue-300 transition-colors ${sizes.paddingClass} flex-shrink-0`}
+                      data-testid="button-fullscreen-mobile"
+                    >
+                      {playerState.isFullscreen ? <Minimize size={sizes.iconSmall} /> : <Maximize size={sizes.iconSmall} />}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

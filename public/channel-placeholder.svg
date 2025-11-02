@@ -1,55 +1,12 @@
-<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <style>
-        /* Define fallback variables for when SVG is opened directly */
-        :root {
-            --bg-tertiary: 240 5.9% 90%;
-            --bg-secondary: 240 5.9% 94%;
-            --border: 240 5.9% 80%;
-            --muted-foreground: 240 3.8% 46.1%;
-            --accent: 240 5.9% 10%;
-        }
+<svg width="160" height="90" viewBox="0 0 160 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="160" height="90" rx="8" fill="#1f1f1f"/>
+    
+    <g stroke="#cccccc" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="30" y="22" width="100" height="46" rx="6" fill="none"/>
         
-        .dark {
-            --bg-tertiary: 0 0% 12%;
-            --bg-secondary: 0 0% 10%;
-            --border: 0 0% 20%;
-            --muted-foreground: 0 0% 80%;
-            --accent: 0 73% 60%;
-        }
+        <line x1="65" y1="18" x2="55" y2="8" />
+        <line x1="95" y1="18" x2="105" y2="8" />
 
-        .container {
-            cursor: pointer;
-        }
-        .bg {
-            fill: hsl(var(--bg-tertiary));
-            stroke: hsl(var(--border));
-            stroke-width: 2;
-            transition: fill 0.2s ease-in-out;
-        }
-        .icon-stroke {
-            stroke: hsl(var(--muted-foreground));
-            stroke-width: 10;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            transition: stroke 0.2s ease-in-out;
-        }
-        
-        .container:hover .bg {
-            fill: hsl(var(--bg-secondary));
-        }
-        
-        .container:hover .icon-stroke {
-            stroke: hsl(var(--accent));
-        }
-    </style>
-    <g class="container">
-        <rect x="1" y="1" width="198" height="198" class="bg" rx="12" />
-        
-        <rect x="40" y="60" width="120" height="80" rx="10" class="icon-stroke" fill="none" />
-        
-        <line x1="85" y1="45" x2="70" y2="30" class="icon-stroke" />
-        <line x1="115" y1="45" x2="130" y2="30" class="icon-stroke" />
-
-        <line x1="70" y1="100" x2="130" y2="100" class="icon-stroke" />
+        <line x1="55" y1="45" x2="105" y2="45" />
     </g>
 </svg>

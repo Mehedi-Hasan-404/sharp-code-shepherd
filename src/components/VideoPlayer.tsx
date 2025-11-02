@@ -670,7 +670,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   
   const handleDragMove = useCallback((e: MouseEvent) => {
     if (!dragStartRef.current?.isDragging) return; 
-    e.preventDefault(); // Prevent page scroll while dragging
+    e.preventDefault(); // Prevent page scroll
     throttledUpdate(() => {
       const newTime = calculateNewTime(e.clientX); 
       if (newTime !== null) { 
@@ -715,7 +715,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!touchStartRef.current) return;
     e.stopPropagation();
-    e.preventDefault(); // Prevent page scroll while dragging
+    e.preventDefault(); // Prevent page scroll
     throttledUpdate(() => {
       const rect = progressRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -1057,7 +1057,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           
           <div className={`absolute bottom-0 left-0 right-0 ${sizes.containerPaddingClass} flex flex-col`} style={{ maxHeight: isMobile ? '30%' : '25%' }}>
             <div className="mb-2 md:mb-3 flex-shrink-0">
-              <div ref={progressRef} className="relative h-2 py-2 -my-2 bg-transparent cursor-pointer group" onClick={handleProgressClick} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+              <div ref={progressRef} className="relative h-2 py-2 -my-2 bg-transparent cursor-pointer group" onClick={handleProgressClick} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
                 
                 {/* FIX FOR SEEKBAR ALIGNMENT: Replaced 'inset-x-0' with the new inset class */}
                 <div className={`absolute ${sizes.progressInsetClass} top-1/2 -translate-y-1/2 ${sizes.progressBarClass} bg-white bg-opacity-30 rounded-full`}>

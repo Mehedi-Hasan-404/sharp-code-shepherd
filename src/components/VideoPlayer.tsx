@@ -231,6 +231,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           
           video.muted = muted;
           if (autoPlay) video.play().catch(console.warn);
+
+          // FIX: Correctly detect DVR (VOD) streams vs. true Live
+          const duration = video.duration;
+          const isLive = (hls.liveSyncPosition !== null) && (!isFinite(duration) || duration === 0);
+          
           setPlayerState(prev => ({ 
             ...prev, 
             isLoading: false, 
@@ -242,8 +247,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
             isMuted: video.muted, 
             isPlaying: true, 
             showControls: true,
-            isLive: hls.liveSyncPosition !== null,
-            duration: hls.liveSyncPosition !== null ? Infinity : video.duration || 0,
+            isLive: isLive,
+            duration: isLive ? Infinity : duration,
           }));
           updateCurrentQualityHeight();
           startControlsTimer();
@@ -411,6 +416,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       
       video.muted = muted;
       if (autoPlay) video.play().catch(console.warn);
+
+      // FIX: Correctly detect DVR (VOD) streams vs. true Live
+      const duration = video.duration;
+      const isLive = player.isLive() && (!isFinite(duration) || duration === 0);
+      
       setPlayerState(prev => ({ 
         ...prev, 
         isLoading: false, 
@@ -423,8 +433,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         isMuted: video.muted, 
         isPlaying: true, 
         showControls: true,
-        isLive: player.isLive(),
-        duration: player.isLive() ? Infinity : video.duration || 0,
+        isLive: isLive,
+        duration: isLive ? Infinity : duration,
       }));
       updateCurrentQualityHeight();
       startControlsTimer();
@@ -441,6 +451,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       if (loadingTimeoutRef.current) clearTimeout(loadingTimeoutRef.current);
       video.muted = muted;
       if (autoPlay) video.play().catch(console.warn);
+
+      // FIX: Correctly detect DVR (VOD) streams vs. true Live
+      const duration = video.duration;
+      const isLive = !isFinite(duration);
+      
       setPlayerState(prev => ({ 
         ...prev, 
         isLoading: false, 
@@ -449,8 +464,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         isMuted: video.muted, 
         isPlaying: true, 
         showControls: true,
-        isLive: false,
-        duration: video.duration || 0,
+        isLive: isLive,
+        duration: isLive ? Infinity : duration,
       }));
       updateCurrentQualityHeight();
       startControlsTimer();
@@ -737,8 +752,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
   }, []);
   
+  // FIX: Simplified logic to correctly handle play/pause for all player types
   const togglePlay = useCallback(() => {
-    const video = videoRef.current; if (!video) return; if (playerTypeRef.current === 'shaka' && shakaPlayerRef.current) { if (video.paused) shakaPlayerRef.current.play().catch(console.error); else shakaPlayerRef.current.pause(); } else { if (video.paused) video.play().catch(console.error); else video.pause(); } setPlayerState(prev => ({ ...prev, showControls: true })); lastActivityRef.current = Date.now();
+    const video = videoRef.current; 
+    if (!video) return; 
+    
+    if (video.paused) {
+      video.play().catch(console.error); 
+    } else {
+      video.pause(); 
+    } 
+    
+    setPlayerState(prev => ({ ...prev, showControls: true })); 
+    lastActivityRef.current = Date.now();
   }, []);
   
   const toggleMute = useCallback(() => {

@@ -1084,7 +1084,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                     </button>
                     
                     {/* FIX FOR DESKTOP VOLUME SLIDER: 
-                      Replaced all Tailwind classes with the single CSS class 'volume-slider-horizontal' 
+                      Replaced all broken Tailwind classes with the single CSS class 'volume-slider-horizontal' 
                       to show the "white marked area" (the track)
                     */}
                     <input

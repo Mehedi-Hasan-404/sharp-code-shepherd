@@ -1083,7 +1083,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       {playerState.isMuted ? <VolumeX size={sizes.iconSmall} /> : volume > 50 ? <Volume2 size={sizes.iconSmall} /> : <Volume1 size={sizes.iconSmall} />}
                     </button>
                     
-                    {/* FIX FOR DESKTOP VOLUME SLIDER */}
+                    {/* FIX FOR DESKTOP VOLUME SLIDER: 
+                      Replaced all Tailwind classes with the single CSS class 'volume-slider-horizontal' 
+                      to show the "white marked area" (the track)
+                    */}
                     <input
                       type="range"
                       min="0"
@@ -1191,7 +1194,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
                       {playerState.isLive ? (
                         <span className="px-1.5 py-0.5 bg-red-600 rounded text-xs font-semibold">LIVE</span>
                       ) : (
-                        <>{formatTime(playerState.currentTime)} / {formatTime(playerState.duration)}</>
+                        <>{formatTime(playerState.currentTime)} / {formatTime(playerV2.duration)}</>
                       )}
                     </div>
                   </div>

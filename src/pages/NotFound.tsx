@@ -1,14 +1,24 @@
 // /src/pages/NotFound.tsx
 import { Link } from 'wouter';
-import { Home, ArrowLeft, Tv } from 'lucide-react';
+import { Home, ArrowLeft, Tv } from 'lucide-react'; // Removed Sparkles import
 import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="text-center space-y-6 max-w-md">
+        
+        {/* Animated Live TV Pro Branding (Sparkles removed) */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <Tv size={32} className="text-accent" style={{ 
+            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+          }} />
+          <h1 className="text-3xl sm:text-4xl font-bold">
+            <span className="gradient-text">Live TV Pro</span>
+          </h1>
+        </div>
+
         <div className="space-y-4">
-          <Tv size={64} className="text-accent mx-auto opacity-50" />
           <h1 className="text-6xl font-bold text-accent">404</h1>
           <h2 className="text-2xl font-semibold">Page Not Found</h2>
           <p className="text-text-secondary">

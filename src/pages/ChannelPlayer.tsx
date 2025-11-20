@@ -1,5 +1,4 @@
-// /src/pages/ChannelPlayer.tsx - Fixed Version
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -14,6 +13,7 @@ import { useFavorites } from '@/contexts/FavoritesContext';
 import { useRecents } from '@/contexts/RecentsContext';
 import { toast } from "@/components/ui/sonner";
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { getProxiedUrl } from '@/lib/urlEncryption';
 
 interface ChannelPlayerProps {
   channelId: string;
@@ -28,8 +28,28 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // CRITICAL FIX: Add ref to scroll to top
+  const topRef = useRef<HTMLDivElement>(null);
+
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { addRecent } = useRecents();
+
+  // CRITICAL FIX: Scroll to top when channel changes
+  useEffect(() => {
+    if (channel && topRef.current) {
+      // Smooth scroll to top
+      topRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+      
+      // Also scroll window to top (backup)
+      window.scrollTo({ 
+        top: 0, 
+        behavior: 'smooth' 
+      });
+    }
+  }, [channel?.id]); // Trigger when channel ID changes
 
   useEffect(() => {
     if (channelId) {
@@ -60,77 +80,34 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
     }
   }, [searchQuery, allChannels, channel]);
 
-  const parseM3U = (m3uContent: string, categoryId: string, categoryName: string): PublicChannel[] => {
-    const lines = m3uContent.split('\n').map(line => line.trim()).filter(line => line);
-    const channels: PublicChannel[] = [];
-    let currentChannel: Partial<PublicChannel> = {};
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-
-      if (line.startsWith('#EXTINF:')) {
-        // Enhanced name extraction - supports multiple M3U formats
-        let channelName = 'Unknown Channel';
-        
-        // Method 1: Try tvg-name attribute (most reliable)
-        const tvgNameMatch = line.match(/tvg-name="([^"]+)"/);
-        if (tvgNameMatch) {
-          channelName = tvgNameMatch[1].trim();
-        } else {
-          // Method 2: Try group-title attribute followed by comma and name
-          const groupTitleMatch = line.match(/group-title="[^"]*",(.+)$/);
-          if (groupTitleMatch) {
-            channelName = groupTitleMatch[1].trim();
-          } else {
-            // Method 3: Fallback to text after last comma (original method)
-            const nameMatch = line.match(/,([^,]+)$/);
-            if (nameMatch) {
-              channelName = nameMatch[1].trim();
-            }
-          }
-        }
-        
-        // Extract logo URL
-        const logoMatch = line.match(/tvg-logo="([^"]+)"/);
-        const logoUrl = logoMatch ? logoMatch[1] : '/channel-placeholder.svg';
-
-        currentChannel = {
-          name: channelName,
-          logoUrl: logoUrl,
-          categoryId,
-          categoryName,
-        };
-      } else if (line && !line.startsWith('#') && currentChannel.name) {
-        const cleanChannelName = currentChannel.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-        const channel: PublicChannel = {
-          id: `${categoryId}_${cleanChannelName}_${channels.length}`,
-          name: currentChannel.name,
-          logoUrl: currentChannel.logoUrl || '/channel-placeholder.svg',
-          streamUrl: line,
-          categoryId,
-          categoryName,
-        };
-        channels.push(channel);
-        currentChannel = {};
-      }
-    }
-
-    return channels;
-  };
-
+  // --- UPDATED FUNCTION ---
   const fetchM3UPlaylist = async (m3uUrl: string, categoryId: string, categoryName: string): Promise<PublicChannel[]> => {
     try {
-      const response = await fetch(m3uUrl);
+      const response = await fetch('/api/parse-m3u', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          categoryId,
+          categoryName,
+          m3uUrl,
+        }),
+      });
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch M3U playlist');
       }
-      const m3uContent = await response.text();
-      return parseM3U(m3uContent, categoryId, categoryName);
+
+      const data = await response.json();
+      return data.channels || [];
     } catch (error) {
-      console.error('Error fetching M3U playlist:', error);
+      // SECURITY: Don't log error
       return [];
     }
   };
+  // --- END UPDATED FUNCTION ---
 
   const fetchAllChannels = async () => {
     try {
@@ -138,7 +115,6 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
 
       let categoryChannelsList: PublicChannel[] = [];
 
-      // Get manual channels from the same category
       try {
         const channelsRef = collection(db, 'channels');
         const channelsQuery = query(channelsRef, where('categoryId', '==', channel.categoryId));
@@ -149,10 +125,9 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
         })) as PublicChannel[];
         categoryChannelsList = [...categoryChannelsList, ...manualChannels];
       } catch (manualChannelsError) {
-        console.error('Error fetching manual channels:', manualChannelsError);
+        console.error('Error fetching manual channels');
       }
 
-      // Get M3U channels from the same category
       try {
         const categoriesRef = collection(db, 'categories');
         const categoryDoc = await getDocs(query(categoriesRef, where('__name__', '==', channel.categoryId)));
@@ -172,17 +147,16 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
           }
         }
       } catch (m3uError) {
-        console.error('Error loading M3U playlist:', m3uError);
+        console.error('Error loading M3U playlist');
       }
 
-      // Filter out duplicates
       const uniqueChannels = categoryChannelsList.filter((ch, index, self) =>
         index === self.findIndex((t) => t.id === ch.id)
       );
 
       setAllChannels(uniqueChannels);
     } catch (error) {
-      console.error('Error in fetchAllChannels:', error);
+      console.error('Error in fetchAllChannels');
     }
   };
 
@@ -200,7 +174,6 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
       const decodedChannelId = decodeURIComponent(channelId);
       let foundChannel: PublicChannel | null = null;
 
-      // 1. Search manual channels first
       try {
         const channelsRef = collection(db, 'channels');
         const channelsSnapshot = await getDocs(channelsRef);
@@ -220,10 +193,9 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
           }
         }
       } catch (manualChannelsError) {
-        console.error('Error fetching manual channels:', manualChannelsError);
+        console.error('Error fetching manual channels');
       }
 
-      // 2. Search M3U channels if not found
       if (!foundChannel) {
         const categoriesRef = collection(db, 'categories');
         const categoriesSnapshot = await getDocs(categoriesRef);
@@ -246,7 +218,8 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
                 break;
               }
             } catch (m3uError) {
-              console.error(`Error loading M3U playlist for category ${categoryData.name}:`, m3uError);
+               // SECURITY: Don't log details that might contain URL
+               console.error('Error checking M3U playlist for channel');
             }
           }
         }
@@ -270,7 +243,7 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
       }
 
     } catch (error) {
-      setError(`Failed to load channel: ${error}`);
+      setError(`Failed to load channel`);
     } finally {
       setLoading(false);
     }
@@ -287,7 +260,7 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
         toast.success(`${channel.name} added to favorites!`);
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      console.error('Error toggling favorite');
       toast.error("Failed to update favorites");
     }
   };
@@ -302,7 +275,7 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
           url: window.location.href,
         });
       } catch (error) {
-        console.error('Error sharing:', error);
+        console.error('Error sharing');
       }
     } else {
       try {
@@ -360,12 +333,16 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
   }
 
   const isChannelFavorite = isFavorite(channel.id);
+  const playerStreamUrl = channel.streamUrl && channel.streamUrl.includes(".m3u8")
+    ? getProxiedUrl(channel.streamUrl)
+    : channel.streamUrl;
 
   return (
     <ErrorBoundary>
-      <div className="space-y-6 p-4 sm:p-6">
+      {/* CRITICAL FIX: Add ref for scroll target */}
+      <div ref={topRef} className="space-y-6 p-4 sm:p-6">
 
-        {/* Back Button at top left */}
+        {/* Back Button and Actions */}
         <div className="flex items-center justify-between -mt-2">
           <Button 
             variant="ghost" 
@@ -417,7 +394,7 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
         <div className="w-full aspect-video bg-black overflow-hidden shadow-2xl">
           <VideoPlayer
             key={channel.id} 
-            streamUrl={channel.streamUrl}
+            streamUrl={playerStreamUrl}
             channelName={channel.name}
             autoPlay={true}
             muted={false}
@@ -454,7 +431,6 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
                     className="group cursor-pointer border rounded-lg hover:border-accent transition-all duration-300 bg-card shadow-sm hover:shadow-lg transform hover:scale-105 relative overflow-hidden"
                     onClick={() => handleChannelSelect(ch)}
                   >
-                    {/* Favorite Star Button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -465,7 +441,7 @@ const ChannelPlayer = ({ channelId }: ChannelPlayerProps) => {
                             addFavorite(ch);
                           }
                         } catch (error) {
-                          console.error('Error toggling favorite:', error);
+                          console.error('Error toggling favorite');
                         }
                       }}
                       className={`absolute top-2 right-2 p-1.5 rounded-full z-10 transition-all duration-300 transform hover:scale-110 ${

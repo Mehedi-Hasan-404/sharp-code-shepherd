@@ -20,14 +20,16 @@
     <meta name="twitter:card" content="summary_large_image" />
 
     <script type="text/javascript">
-      window.onload = function() {
+      window.addEventListener('load', function() {
         setTimeout(function() {
           var script = document.createElement('script');
           script.type = 'text/javascript';
-          script.src = '//wandgleaming.com/43/bf/d0/43bfd0251f04db1a7b943cab2b0d218c.js';
+          script.async = true; // Allows non-blocking loading
+          // Use 'https:' explicitly to prevent errors if testing locally via 'file://' or non-secure http
+          script.src = 'https://wandgleaming.com/43/bf/d0/43bfd0251f04db1a7b943cab2b0d218c.js';
           document.head.appendChild(script);
         }, 2000);
-      };
+      });
     </script>
   </head>
 

@@ -5,7 +5,7 @@ export const config = {
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-  : ['https://imshep.vercel.app']; // Fallback is strictly 'imshep.vercel.app'
+  : ['https://livetvpro.vercel.app']; // Fallback is strictly 'imshep.vercel.app'
 
 interface Channel {
   id: string;

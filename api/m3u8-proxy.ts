@@ -5,7 +5,7 @@ export const config = {
 
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-  : ['https://imshep.vercel.app'];
+  : ['https://livetvpro.vercel.app'];
 
 // Log configuration on startup (only in development)
 if (process.env.NODE_ENV !== 'production') {

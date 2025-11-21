@@ -1,4 +1,4 @@
-// /src/App.tsx
+// src/App.tsx
 import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,12 +11,15 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Layout from "@/components/Layout";
 import { Analytics } from "@vercel/analytics/react";
 
+// Lazy Load Pages
 const Home = lazy(() => import("@/pages/Home"));
 const Favorites = lazy(() => import("@/pages/Favorites"));
+const Live = lazy(() => import("@/pages/Live"));
+const EventPlayer = lazy(() => import("@/pages/EventPlayer")); // Import EventPlayer
 const CategoryChannels = lazy(() => import("@/pages/CategoryChannels"));
 const ChannelPlayer = lazy(() => import("@/pages/ChannelPlayer"));
 const Admin = lazy(() => import("@/pages/Admin"));
-const Contact = lazy(() => import("@/pages/Contact")); // Import new page
+const Contact = lazy(() => import("@/pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -40,6 +43,15 @@ const App = () => (
                 <Switch>
                   <Route path="/">
                     <Layout><Home /></Layout>
+                  </Route>
+                  <Route path="/live">
+                    <Layout><Live /></Layout>
+                  </Route>
+                  {/* New Route for Live Event Player */}
+                  <Route path="/live/:eventId">
+                    {(params: { eventId: string } | undefined) => 
+                      <Layout><EventPlayer /></Layout>
+                    }
                   </Route>
                   <Route path="/favorites">
                     <Layout><Favorites /></Layout>

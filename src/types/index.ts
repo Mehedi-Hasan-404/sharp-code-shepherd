@@ -9,8 +9,8 @@ export interface Category {
   name: string;
   slug: string;
   iconUrl?: string;
-  m3uUrl?: string; // M3U playlist URL
-  order?: number; // Display order for sorting categories
+  m3uUrl?: string;
+  order?: number;
 }
 
 export interface PublicChannel {
@@ -48,4 +48,23 @@ export interface RecentChannel {
   streamUrl: string;
   categoryName: string;
   watchedAt: number;
+}
+
+// --- UPDATED TYPES FOR LIVE EVENTS ---
+export interface LiveEventLink {
+  label: string;
+  url: string;
+}
+
+export interface LiveEvent {
+  id: string;
+  category: string; // e.g., "Cricket", "Football"
+  league: string;   // e.g., "Bangladesh Premier League"
+  team1Name: string;
+  team1Logo: string;
+  team2Name: string;
+  team2Logo: string;
+  startTime: string; // ISO string date
+  isLive: boolean;   // Force live status
+  links: LiveEventLink[];
 }

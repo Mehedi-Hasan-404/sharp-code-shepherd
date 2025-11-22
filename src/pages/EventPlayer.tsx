@@ -73,7 +73,7 @@ const EventPlayer = () => {
     if (!event) return;
     const shareData = {
       title: event.title,
-      text: `Watch ${event.title} live on ImShep!`,
+      text: `Watch ${event.title} live on Live TV Pro!`,
       url: window.location.href
     };
 
